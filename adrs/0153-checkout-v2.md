@@ -85,10 +85,22 @@ Note:
 
 #### SSH key
 
-Persist the SSH key under the directory `$RUNNER_TEMP` and set `core.sshCommand` in the local git config to call the script.
+The SSH key will be written to disk under the `$RUNNER_TEMP` directory. The SSH key will
+be removed by the action's post-job hook. Additionally, RUNNER_TEMP is cleared by the
+runner between jobs.
 
-Note:
-- The directory `$RUNNER_TEMP` is cleaned up between jobs.
+The SSH key must be written with strict file permissions. The SSH client requires the file
+to be read/write for the user, and not accessible by others.
+
+The SSH command will be overridden for the local git config:
+
+```
+git config core.sshCommand "ssh -i path-to-ssh-key -o CheckHostIP=no"
+```
+
+[CheckHostIP](https://linux.die.net/man/5/ssh_config):
+
+> If this flag is set to ''yes'', ssh(1) will additionally check the host IP address in the known_hosts file. This allows ssh to detect if a host key changed due to DNS spoofing. If the option is set to ''no'', the check will not be executed. The default is ''yes''.
 
 ### Fetch behavior
 
