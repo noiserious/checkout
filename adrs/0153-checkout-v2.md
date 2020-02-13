@@ -27,9 +27,9 @@ We want to take this opportunity to make behavioral changes, from v1. This docum
       event.  Otherwise, defaults to `master`.
   token:
     description: >
-      Auth token used to fetch the repository. The token is stored in the local
-      git config, which enables your scripts to run authenticated git commands.
-      The post-job step removes the token from the git config. [Learn more about
+      Personal access token (PAT) or SSH key used to fetch the repository. The PAT or SSH key is
+      configured with the local git config, which enables your scripts to run authenticated git commands.
+      The post-job step removes the local configuration for the PAT or SSH key. [Learn more about
       creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
     default: ${{ github.token }}
   persist-credentials:
@@ -49,6 +49,7 @@ We want to take this opportunity to make behavioral changes, from v1. This docum
 ```
 
 Note:
+- SSH support is new
 - `persist-credentials` is new
 - `path` behavior is different (refer [below](#path) for details)
 - `submodules` was removed (error if specified; add later if needed)
@@ -63,19 +64,31 @@ Note:
 
 ### Persist credentials
 
-Persist the token in the git config (http.extraheader). This will allow users to script authenticated git commands, like `git fetch`.
+The credentials will be persisted on disk. This will allow users to script authenticated git commands, like `git fetch`.
 
-A post script will remove the credentials from the git config (cleanup for self-hosted).
+A post script will remove the credentials (cleanup for self-hosted).
 
-Users may opt-out by specifying `persist-credentials: false`
+Users may opt-out by specifying `persist-credentials: false`.
 
 Note:
 - Users scripting `git commit` may need to set the username and email. The service does not provide any reasonable default value. Users can add `git config user.name <NAME>` and `git config user.email <EMAIL>`. We will document this guidance.
-- The auth header (stored in the repo's git config), is scoped to all of github `http.https://github.com/.extraheader`
+
+#### PAT
+
+When using the `${{github.token}}` or a PAT, the token will be persisted in the local git config. The config key `http.https://github.com/.extraheader` enables an auth header to be specified on all authenticated commands `AUTHORIZATION: basic <BASE64_U:P>`.
+
+Note:
+- The auth header is scoped to all of github `http.https://github.com/.extraheader`
   - Additional public remotes also just work.
   - If users want to authenticate to an additional private remote, they should provide the `token` input.
   - Lines up if we add submodule support in the future. Don't need to worry about calculating relative URLs. Just works, although needs to be persisted in each submodule git config.
-  - Users opt out of persisted credentials (`persist-credentials: false`), or can script the removal themselves (`git config --unset-all http.https://github.com/.extraheader`).
+
+#### SSH key
+
+Persist the SSH key under the directory `$RUNNER_TEMP` and set `core.sshCommand` in the local git config to call the script.
+
+Note:
+- The directory `$RUNNER_TEMP` is cleaned up between jobs.
 
 ### Fetch behavior
 
