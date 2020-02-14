@@ -205,7 +205,7 @@ function rmRF(inputPath) {
                 return;
             }
             if (isDir) {
-                yield exec(`rm -rf "${inputPath}"`);
+                yield exec(`sudo rm -rf "${inputPath}"`);
             }
             else {
                 yield ioUtil.unlink(inputPath);
